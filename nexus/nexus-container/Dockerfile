@@ -2,17 +2,32 @@ FROM centos:7
 
 EXPOSE 8081
 
-ENV NEXUS_VERSION 2.14.0-01
+ENV NEXUS_VERSION 2.14.16-01
 ENV NEXUS_HOME /opt/nexus/nexus
 ENV NEXUS_WORK /sonatype-work
 ENV NEXUS_REPOS /repositories
 
-RUN cd /var/tmp \
-  && curl --fail --silent --location --retry 3 -O \
-  --header "Cookie: oraclelicense=accept-securebackup-cookie; " \
-  http://download.oracle.com/otn-pub/java/jdk/8u101-b13/jdk-8u101-linux-x64.rpm \
-  && rpm -Ui jdk-8u101-linux-x64.rpm \
-  && rm -rf jdk-8u101-linux-x64.rpm
+# RUN cd /var/tmp \
+#   && curl --fail --silent --location --retry 3 -O \
+#   --header "Cookie: oraclelicense=accept-securebackup-cookie; " \
+#   http://download.oracle.com/otn-pub/java/jdk/8u101-b13/jdk-8u101-linux-x64.rpm \
+#   && rpm -Ui jdk-8u101-linux-x64.rpm \
+#   && rm -rf jdk-8u101-linux-x64.rpm
+
+RUN yum repolist > /dev/null && \
+     yum-config-manager --enable rhel-7-server-optional-rpms && \
+     yum clean all && \
+     INSTALL_PKGS="tar \
+        unzip \
+        wget \
+        curl \
+        which \
+        yum-utils \
+        java-1.8.0-openjdk-devel" && \
+     yum install -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
+     yum install -y bind-utils && \
+     rpm -V $INSTALL_PKGS && \
+     yum clean all
 
 # Install jq
 RUN curl --fail --silent --location --retry 3 \
@@ -65,7 +80,7 @@ ENV CONTEXT_PATH /
 ENV MAX_HEAP 768m
 ENV MIN_HEAP 256m
 ENV JAVA_OPTS -server -XX:MaxPermSize=192m -Djava.net.preferIPv4Stack=true
-ENV LAUNCHER_CONF ${NEXUS_HOME}/conf/jetty.xml ${NEXUS_HOME}/conf/jetty-requestlog.xml
+ENV LAUNCHER_CONF "${NEXUS_HOME}/conf/jetty.xml ${NEXUS_HOME}/conf/jetty-requestlog.xml"
 CMD java \
   -Dnexus-work=${NEXUS_WORK} -Dnexus-webapp-context-path=${CONTEXT_PATH} -Dapplication-conf=${NEXUS_HOME}/conf \
   -Xms${MIN_HEAP} -Xmx${MAX_HEAP} \

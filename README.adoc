@@ -9,7 +9,7 @@ The steps that will be done are the following:
 
 * Deploy a nexus container configured for accessing Red Hat's maven repository
 * Install all base images we will be using
-** Centos: centos:cetos7
+** Centos: centos:centos7
 ** Wildfly 8: docker.io/openshift/wildfly-81-centos
 ** EAP 6: registry.access.redhat.com/jboss-eap-6/eap-openshift
 * Create a version of wildfly and EAP S2I images that will use by default the nexus instance created
@@ -291,3 +291,34 @@ link:builders/eap-nexus/eap-nexus-resources.json#L108-L430[See the code]
 
 
 === Sample Wildfly-nexus S2I image
+
+
+=== New Nexus
+
+oc new-app --template=nexus-ephemeral 
+--param=APPLICATION_HOSTNAME=nexus.apps.10.2.2.2.xip.io
+
+=== Download centos7 image , then push into openshift with tag 7
+----
+docker pull centos:centos7
+----
+
+
+There is a section in the Nexus Admin UI to configure proxy settings. It is located under Administration --> Server. See section 6.1.5 of the Nexus Documentation.
+>nexus.exe /run -Dhttps.proxyHost=10.104.1.7 -Dhttps.proxyPort=8080
+
+env:
+  - name: MAVEN_MIRROR_URL
+    value: http://nexus.<project>.svc.cluster.local:8081/content/groups/public/
+
+
+## add more repository to public group
+
+Public Repository --> Configuration
+add idm-repository
+
+## Management template
+```
+oc replace --force -f https://raw.githubusercontent.com/gitlabbin/nexus-ose/master/nexus/ose3/nexus3-resources.yml
+oc describe template nexus3-persistent
+```

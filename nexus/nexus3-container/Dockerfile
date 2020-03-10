@@ -18,6 +18,10 @@ RUN yum install -y wget \
   && chown nexus:nexus /usr/local/bin/* \
   && chown -R nexus:nexus /opt/sonatype
 
+RUN chown -R ${NEXUS_USER}:${NEXUS_USER} ${NEXUS_HOME} ${NEXUS_DATA} ${SONATYPE_WORK}
+RUN chown -R nexus:nexus /nexus-data
+RUN chmod u+wxr -R /nexus-data
+
 # switch to nexus
 USER 200
 
